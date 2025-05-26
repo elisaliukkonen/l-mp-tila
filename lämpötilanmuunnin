@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lämpötilamuunnin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .radio-group {
+            margin-top: 10px;
+        }
+        
+        .radio-group input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .radio-group label {
+            display: inline;
+            margin-right: 15px;
+            font-weight: normal;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lämpötilamuunnin</h1>
+        
+        <div class="form-group">
+            <select id="unitSelector">
+                <option value="celsius">Celsius -> Fahrenheit</option>
+                <option value="fahrenheit">Fahrenheit -> Celsius</option>
+                <option value="celsius-kelvin">Celsius -> Kelvin</option>
+                <option value="kelvin-celsius">Kelvin -> Celsius</option>
+                <option value="fahrenheit-kelvin">Fahrenheit -> Kelvin</option>
+                <option value="kelvin-fahrenheit">Kelvin -> Fahrenheit</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="temperatureInput">Syötä lämpötila:</label>
+            <input type="text" id="temperatureInput" placeholder="Syötä lämpötila">
+        </div>
+        
+        <button onclick="convertTemperature()">Muunna</button>
+        
+        <div class="radio-group">
+            <input type="radio" id="decimal1" name="decimals" value="1" checked>
+            <label for="decimal1">1 desimaali</label>
+            
+            <input type="radio" id="decimal2" name="decimals" value="2">
+            <label for="decimal2">2 desimaalia</label>
+            
+            <input type="radio" id="decimal3" name="decimals" value="3">
+            <label for="decimal3">3 desimaalia</label>
+        </div>
+        
+        <div id="result" class="result hidden"></div>
+    </div>
+
+    <script>
+        function convertTemperature() {
+            const temperatureInput = document.getElementById('temperatureInput').value.trim();
+            const unitSelector = document.getElementById('unitSelector').value;
+            const decimals = parseInt(document.querySelector('input[name="decimals"]:checked').value);
+            const resultDiv = document.getElementById('result');
+            
+            // Tarkista onko syöte tyhjä
+            if (temperatureInput === '') {
+                showError('Syötä lämpötila-arvo!');
+                return;
+            }
+            
+            // Tarkista onko syöte numero
+            const temperature = parseFloat(temperatureInput);
+            if (isNaN(temperature)) {
+                showError('Syöttö ei ole kelvollinen lukuarvo!');
+                return;
+            }
+            
+            let result;
+            let fromUnit, toUnit;
+            
+            try {
+                switch (unitSelector) {
+                    case 'celsius':
+                        // Tarkista absoluuttinen nollapiste Celsiuksessa
+                        if (temperature < -273.15) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (-273,15°C)!');
+                            return;
+                        }
+                        result = (temperature * 9/5) + 32;
+                        fromUnit = '°C';
+                        toUnit = '°F';
+                        break;
+                        
+                    case 'fahrenheit':
+                        // Tarkista absoluuttinen nollapiste Fahrenheitissa (-459.67°F)
+                        if (temperature < -459.67) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (-459,67°F)!');
+                            return;
+                        }
+                        result = (temperature - 32) * 5/9;
+                        fromUnit = '°F';
+                        toUnit = '°C';
+                        break;
+                        
+                    case 'celsius-kelvin':
+                        if (temperature < -273.15) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (-273,15°C)!');
+                            return;
+                        }
+                        result = temperature + 273.15;
+                        fromUnit = '°C';
+                        toUnit = 'K';
+                        break;
+                        
+                    case 'kelvin-celsius':
+                        // Tarkista absoluuttinen nollapiste Kelvinissä (0K)
+                        if (temperature < 0) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (0K)!');
+                            return;
+                        }
+                        result = temperature - 273.15;
+                        fromUnit = 'K';
+                        toUnit = '°C';
+                        break;
+                        
+                    case 'fahrenheit-kelvin':
+                        if (temperature < -459.67) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (-459,67°F)!');
+                            return;
+                        }
+                        result = (temperature - 32) * 5/9 + 273.15;
+                        fromUnit = '°F';
+                        toUnit = 'K';
+                        break;
+                        
+                    case 'kelvin-fahrenheit':
+                        if (temperature < 0) {
+                            showError('Lämpötila ei voi olla pienempi kuin absoluuttinen nollapiste (0K)!');
+                            return;
+                        }
+                        result = (temperature - 273.15) * 9/5 + 32;
+                        fromUnit = 'K';
+                        toUnit = '°F';
+                        break;
+                        
+                    default:
+                        showError('Tuntematon muunnostyyppi!');
+                        return;
+                }
+                
+                // Näytä tulos
+                showSuccess(`${temperature}${fromUnit} = ${result.toFixed(decimals)}${toUnit}`);
+                
+            } catch (error) {
+                showError('Virhe muunnoksessa: ' + error.message);
+            }
+        }
+        
+        function showSuccess(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result success';
+            resultDiv.textContent = message;
+            resultDiv.classList.remove('hidden');
+        }
+        
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result error';
+            resultDiv.textContent = message;
+            resultDiv.classList.remove('hidden');
+        }
+        
+        // Lisää Enter-näppäimen tuki
+        document.getElementById('temperatureInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                convertTemperature();
+            }
+        });
+        
+        // Tyhjennä tulos kun syöte muuttuu
+        document.getElementById('temperatureInput').addEventListener('input', function() {
+            document.getElementById('result').classList.add('hidden');
+        });
+        
+        // Tyhjennä tulos kun yksikkö muuttuu
+        document.getElementById('unitSelector').addEventListener('change', function() {
+            document.getElementById('result').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
